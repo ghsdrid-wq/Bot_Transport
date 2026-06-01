@@ -1,0 +1,5 @@
+customtkinter
+tkcalendar
+requests
+pandas
+pywin32
