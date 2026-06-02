@@ -844,6 +844,7 @@ class App(ctk.CTk):
 
         
     def scheduler_loop(self):
+
         while self.scheduler_running:
 
             try:
@@ -853,12 +854,19 @@ class App(ctk.CTk):
                 hours = 1
                 minutes = 0
 
-            interval = timedelta(
-                hours=hours,
-                minutes=minutes
+            now = datetime.now()
+
+            # ตั้งนาทีตาม Combobox
+            next_run = now.replace(
+                minute=minutes,
+                second=0,
+                microsecond=0
             )
 
-            next_run = datetime.now() + interval
+            # ถ้าเวลาปัจจุบันเลยจุดนั้นแล้ว
+            # ให้ขยับทีละ X ชั่วโมง
+            while next_run <= now:
+                next_run += timedelta(hours=hours)
 
             while self.scheduler_running and datetime.now() < next_run:
 
