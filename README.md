@@ -1,55 +1,119 @@
-# Feishu Auto Report - JMS + Chat
+# Feishu Auto Report Enterprise Edition
 
 ## Overview
 
-Python desktop application สำหรับ:
+Feishu Auto Report Enterprise Edition เป็นระบบ Desktop Automation สำหรับงาน Operation Reporting ที่รวมการ Export ข้อมูลจาก JMS, การสร้าง Dashboard PNG จาก Excel และการส่งรายงานเข้า Feishu Chat ไว้ใน Workflow เดียว
 
-- Export รายงานจาก JMS อัตโนมัติ
-- สร้าง PNG จาก Excel Dashboard
-- ส่งรูปเข้า Feishu Chat ผ่าน Chat ID
-- Auto Scheduler
-- Manual Run
-- Runtime UI Lock
-- Stop / Cancel Process
-- Retry & Recovery System
-
-โปรแกรมรวม JMS Export และ Feishu Chat Sender ไว้ในระบบเดียว
+โปรแกรมถูกออกแบบมาเพื่อลดงาน Manual และลดความผิดพลาดจากการทำงานซ้ำ ๆ โดยสามารถทำงานได้ทั้งแบบ Manual และ Scheduled Execution
 
 ---
 
-## Features
+# Table of Contents
 
-- JMS Report Export
-- Feishu Chat Integration
-- Chat ID Message Sender
-- Excel Dashboard to PNG
-- Auto Scheduler
+- Overview
+- Key Features
+- System Architecture
+- Project Structure
+- Core Modules
+- JMS Export Engine
+- Excel Rendering Engine
+- Blank Image Protection
+- Feishu Integration
+- Scheduler Engine
+- Runtime Lock System
+- Stop Request System
+- Configuration Reference
+- UI Overview
+- Logging System
+- Threading Architecture
+- Error Handling
+- Installation
+- Build EXE
+- Future Roadmap
+
+---
+
+# Key Features
+
+## JMS Export Automation
+
+- Create Export Job อัตโนมัติ
+- Poll Export Status
+- Download XLSX อัตโนมัติ
+- Retry Request
+- Export Timeout Protection
+- User Cancel Support
+
+## Dashboard PNG Generator
+
+- Excel COM Automation
+- Refresh Workbook
+- Refresh Query
+- Calculate Workbook
+- Dynamic Date Update
+- Hide #N/A Rows
+- PNG Export
+
+## PNG Validation Engine
+
+- Blank PNG Detection
+- White Image Detection
+- Minimum File Size Validation
+- Automatic Retry
+
+## Feishu OpenAPI Integration
+
+- Tenant Access Token
+- Image Upload API
+- Chat ID Messaging
+- Retry Request Framework
+
+## Scheduler
+
 - Run Now
-- Stop Running Task
-- Retry Request System
-- Real-time Log Viewer
-- Config Persistence
-- Runtime UI Lock
-- Background Thread Processing
-- Windows Desktop GUI
-- Build EXE Support
+- Auto Scheduler
+- Hour Based Schedule
+- Minute Based Schedule
+- Stop Scheduler
+
+## Enterprise UI
+
+- Modern CustomTkinter Interface
+- Dark Theme
+- Real-Time Log Viewer
+- Status Badge
+- Runtime Lock
+- Configuration Manager
 
 ---
 
-## Tech Stack
+# System Architecture
 
-- Python
-- CustomTkinter
-- Requests
-- tkcalendar
-- Win32COM
-- PythonCOM
-- Threading
-- ConfigParser
+```text
+                Scheduler Engine
+                        │
+                        ▼
+                  Task Manager
+                        │
+         ┌──────────────┼──────────────┐
+         ▼                             ▼
+    JMS Export                  Dashboard Engine
+         │                             │
+         ▼                             ▼
+ Download XLSX                 Refresh Workbook
+         │                             │
+         ▼                             ▼
+ Save Report                  Generate PNG
+         └──────────────┬──────────────┘
+                        ▼
+                  Feishu Sender
+                        ▼
+                   Chat Group
+```
 
 ---
 
-## Project Structure
+# Project Structure
 
 ```text
 project/
@@ -58,6 +122,8 @@ project/
 ├── createpng.py
 ├── sendfeishu.py
 ├── config.ini
+│
+├── report.xlsx
 ├── report.png
 │
 └── bot_fei_main.log
@@ -65,62 +131,192 @@ project/
 
 ---
 
-## System Workflow
+# Core Modules
 
-```text
-Export JMS Report
-        ↓
-Create PNG From Excel
-        ↓
-Get Feishu Token
-        ↓
-Upload Image
-        ↓
-Send To Chat ID
-        ↓
-Complete
-```
+## Bot_Fei_Main.py
+
+Main Application Controller
+
+Responsibilities
+
+- Main GUI
+- Scheduler Engine
+- JMS Export Workflow
+- Feishu Workflow
+- Runtime Lock
+- Stop Request Control
+- Config Management
+- Logging
 
 ---
 
-## JMS Export Module
+## createpng.py
 
-รองรับ:
+Dashboard Rendering Engine
 
-- Export Transportation Report
-- Auto Download Excel
-- Export Time Range
-- Save Path Selection
-- Custom Filename
+Responsibilities
 
-Workflow:
+- Open Excel
+- Refresh Workbook
+- Calculate Workbook
+- Update Report Date
+- Hide Invalid Rows
+- Generate PNG
+- Validate PNG
+
+---
+
+## sendfeishu.py
+
+Feishu Communication Layer
+
+Responsibilities
+
+- Get Token
+- Upload Image
+- Send Message
+- Retry Requests
+
+---
+
+# JMS Export Engine
+
+Workflow
 
 ```text
 Create Export Job
         ↓
-Poll Export Status
+Wait Export Complete
         ↓
 Get Download URL
         ↓
 Download XLSX
         ↓
-Save File
+Save Report
+```
+
+Features
+
+- Automatic Export Job Creation
+- Export Status Polling
+- Retry Download
+- Timeout Protection
+- Stop Request Support
+
+---
+
+# Excel Rendering Engine
+
+ใช้ Microsoft Excel COM Automation
+
+```python
+win32.DispatchEx("Excel.Application")
+```
+
+Capabilities
+
+```python
+RefreshAll()
+CalculateFull()
+CalculateUntilAsyncQueriesDone()
+CopyPicture()
+Chart.Export()
+```
+
+Purpose
+
+- Refresh Dashboard
+- Update Data
+- Render Dashboard
+- Export PNG
+
+---
+
+# Offscreen Rendering Technique
+
+โปรแกรมใช้วิธีการย้ายหน้าต่าง Excel ออกนอกหน้าจอ
+
+```text
+Left = -32000
+Top  = -32000
+```
+
+แทนการ Minimize หรือ Hide
+
+Benefits
+
+- GDI Render ทำงานปกติ
+- ลดปัญหา PNG ขาว
+- เพิ่มเสถียรภาพการ Export
+
+---
+
+# Blank Image Protection
+
+ระบบตรวจสอบภาพทุกครั้งก่อนใช้งาน
+
+Validation
+
+```text
+File Exists
+      ↓
+File Size Check
+      ↓
+White Image Detection
+      ↓
+Variance Detection
+      ↓
+Export Success
+```
+
+Retry
+
+```text
+Maximum Retry = 6
+```
+
+Copy Modes
+
+```text
+screen-picture
+printer-picture
+screen-bitmap
+printer-bitmap
 ```
 
 ---
 
-## Feishu Integration
+# Dashboard Workflow
 
-ใช้ OpenAPI โดยตรง
+```text
+Open Workbook
+      ↓
+Set Date B2
+      ↓
+Refresh Workbook
+      ↓
+Calculate Workbook
+      ↓
+Hide #N/A Rows
+      ↓
+Copy Picture
+      ↓
+Generate PNG
+      ↓
+Validate PNG
+```
 
-รองรับ:
+---
 
-- Tenant Access Token
-- Image Upload API
-- Chat ID Message API
-- Retry Request
+# Feishu Integration
 
-Workflow:
+Authentication
+
+```text
+Tenant Access Token
+```
+
+Workflow
 
 ```text
 Get Token
@@ -129,153 +325,277 @@ Upload Image
       ↓
 Receive image_key
       ↓
-Send Image To Chat ID
+Send Message
 ```
+
+Supported APIs
+
+- Auth API
+- Image Upload API
+- Message API
 
 ---
 
-## Dashboard Generator
+# Retry Framework
 
-ไฟล์:
+Used By
 
 ```text
-createpng.py
+Get Token
+Upload Image
+Send Message
+Create Export Job
+Download XLSX
 ```
 
-ใช้:
+Features
 
-```python
-win32.DispatchEx("Excel.Application")
-```
-
-สำหรับ:
-
-- เปิด Excel จริง
-- Refresh Workbook
-- Calculate Workbook
-- Export Dashboard PNG
+- Retry Counter
+- Progressive Delay
+- Exception Handling
 
 ---
 
-## Excel Processing
+# Scheduler Engine
 
-Workflow:
+Supported Modes
 
-```text
-Open Workbook
-      ↓
-RefreshAll()
-      ↓
-CalculateFull()
-      ↓
-Hide #N/A Rows
-      ↓
-CopyPicture()
-      ↓
-Chart.Export()
-      ↓
-PNG Output
-```
-
----
-
-## Scheduler System
-
-รองรับ:
-
-- Run Every X Hours
-- Run Every X Minutes
 - Manual Run
 - Auto Run
-- Stop Scheduler
 
-ตัวอย่าง:
+Configuration
 
 ```text
-Run every 1 hour 5 minutes
+Run Every X Hours
+At Minute Y
+```
+
+Example
+
+```text
+Interval = 1 Hour
+Minute   = 5
+```
+
+Execution
+
+```text
+10:05
+11:05
+12:05
+13:05
 ```
 
 ---
 
-## GUI Components
+# Runtime Lock System
 
-### Home
+เมื่อ Job เริ่มทำงาน
 
-- Run Now
+ระบบจะ Lock
+
+```text
+Date Controls
+Time Controls
+Scheduler Controls
+Settings Page
+Config Fields
+```
+
+Purpose
+
+- Prevent Runtime Modification
+- Prevent Invalid State
+- Prevent Data Corruption
+
+---
+
+# Stop Request System
+
+รองรับการหยุดงานระหว่างทำงาน
+
+Affected Components
+
+```text
+JMS Export
+PNG Generator
+Feishu Upload
+Scheduler
+```
+
+Workflow
+
+```text
+User Press Stop
+        ↓
+stop_requested = True
+        ↓
+Current Task Stops
+        ↓
+Unlock UI
+```
+
+---
+
+# Configuration Reference
+
+## Scheduler
+
+```ini
+run_hour_interval=1
+run_minute_interval=5
+start_hour=13:00
+end_hour=23:00
+```
+
+## JMS
+
+```ini
+jms_auth_token=
+jms_save_path=
+jms_filename=report.xlsx
+```
+
+## Dashboard
+
+```ini
+excel_file=
+excel_sheet_index=2
+excel_range=B2:V110
+```
+
+## PNG
+
+```ini
+png_output_folder=
+png_filename=report.png
+```
+
+## Feishu
+
+```ini
+app_id=
+app_secret=
+chat_id=
+```
+
+---
+
+# UI Overview
+
+## Home Tab
+
+Contains
+
+- Interval Controls
+- Date Range Controls
+- Export JMS Checkbox
+- Feishu Checkbox
 - Start Auto
-- Stop Process
-- Date Range
-- Time Range
-- Export JMS
-- Feishu Chat
+- Run Now
+- Stop Button
+- Status Badge
 - Live Log
 
-### Setting
+---
 
-- JMS Auth Token
+## Setting Tab
+
+### JMS Section
+
+- Auth Token
 - Save Path
+- Output Filename
+
+### Dashboard Section
+
 - Excel File
 - Sheet Index
 - Capture Range
-- PNG Output Folder
+- PNG Folder
+
+### Feishu Section
+
 - App ID
 - App Secret
 - Chat ID
 
 ---
 
-## Runtime Protection
+# Logging System
 
-ระหว่างรัน:
+Example
 
-- Lock Setting UI
-- Lock Scheduler Setting
-- Prevent Concurrent Run
-- Safe Stop Request
-
----
-
-## Retry System
-
-ใช้:
-
-```python
-request_with_retry()
+```text
+[10:00:00] Create JMS Export Job
+[10:00:15] Download XLSX
+[10:01:00] Refresh Workbook
+[10:01:25] PNG Ready
+[10:01:40] Upload Image
+[10:01:45] Send Message
+[10:01:50] Done
 ```
 
-รองรับ:
+Log Output
 
-- Token Request
-- Export Request
-- Download Request
-- Upload Image
-- Send Message
-
----
-
-## Config Example
-
-```ini
-run_hour_interval=1
-run_minute_interval=5
-
-excel_sheet_index=2
-excel_range=B2:V110
-
-png_filename=report.png
+```text
+bot_fei_main.log
 ```
 
 ---
 
-## Installation
+# Threading Architecture
 
-### Install Dependencies
+```text
+Main UI Thread
+      │
+      ├── Scheduler Thread
+      │
+      └── Worker Thread
+              │
+              ├── JMS Export
+              ├── PNG Generator
+              └── Feishu Sender
+```
+
+Benefits
+
+- GUI ไม่ค้าง
+- Background Processing
+- Responsive Interface
+
+---
+
+# Error Handling
+
+Supported
+
+- Invalid Token
+- Export Timeout
+- Download Failure
+- Missing Excel File
+- Blank PNG
+- Upload Failure
+- Invalid Chat ID
+- User Cancel Request
+
+---
+
+# Installation
+
+## Dependencies
 
 ```bash
-pip install customtkinter requests tkcalendar pywin32
+pip install customtkinter
+pip install requests
+pip install pywin32
+pip install tkcalendar
+pip install pillow
 ```
 
-### Run
+---
+
+## Run
 
 ```bash
 python Bot_Fei_Main.py
@@ -283,7 +603,15 @@ python Bot_Fei_Main.py
 
 ---
 
-## Build EXE
+# Build EXE
+
+## OneDir
+
+```bash
+pyinstaller --onedir --windowed Bot_Fei_Main.py
+```
+
+## OneFile
 
 ```bash
 pyinstaller --onefile --windowed Bot_Fei_Main.py
@@ -291,21 +619,48 @@ pyinstaller --onefile --windowed Bot_Fei_Main.py
 
 ---
 
-## Error Handling
+# Deployment Guide
 
-รองรับ:
-
-- Missing Token
-- Invalid Chat ID
-- Excel Not Found
-- PNG Export Failure
-- Upload Failure
-- Download Failure
-- Export Timeout
-- User Cancel Request
+1. Install Microsoft Excel
+2. Install Python Dependencies
+3. Configure config.ini
+4. Configure JMS Token
+5. Configure Feishu App
+6. Test Run Now
+7. Configure Scheduler
+8. Build EXE
+9. Deploy To Production
 
 ---
 
-## License
+# Security Notes
+
+- Do not commit App Secret
+- Do not expose JMS Token
+- Restrict access to config.ini
+- Use dedicated Feishu Application
+
+---
+
+# Future Roadmap
+
+- Multiple Dashboard Support
+- PDF Export
+- Dashboard History
+- Multi Image Broadcast
+- Telegram Integration
+- Slack Integration
+- Auto Archive
+- Report Storage Database
+
+---
+
+# License
 
 MIT License
+
+---
+
+# Author
+
+Developed for Warehouse Operations, JMS Reporting Automation and Feishu Dashboard Broadcasting.
