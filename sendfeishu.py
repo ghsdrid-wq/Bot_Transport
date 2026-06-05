@@ -7,7 +7,7 @@ def request_with_retry(func, retries=3, delay=2, log=None, name=""):
             return func()
         except Exception as e:
             if log:
-                log(f"{name} failed ({i+1}/{retries}): {e}")
+                log(f"  Retry [{i+1}/{retries}] {name} — {e}")
             if i < retries - 1:
                 time.sleep(delay * (i + 1))
             else:
@@ -34,7 +34,7 @@ def get_token(app_id, app_secret, log=None):
         raise Exception(f"Get token failed: {res}")
 
     if log:
-        log("TOKEN OK")
+        log("  Feishu token OK")
 
     return res["tenant_access_token"]
 
@@ -102,10 +102,11 @@ def run_send(folder, webhook, secret, app_id, app_secret, log=None):
     if not os.path.exists(file_path):
         raise Exception(f"File not found: {file_path}")
 
-    write(f"Uploading: {file_path}")
+    write("── Feishu Delivery ─────────────────")
+    write(f"  Uploading  : {os.path.basename(file_path)}")
     key = upload_image(token, file_path, log=write)
 
-    write(f"Sending: {file_path}")
+    write(f"  Sending    : {os.path.basename(file_path)}")
     send_image(key, webhook, secret, log=write)
 
     time.sleep(1)

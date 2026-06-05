@@ -337,99 +337,281 @@ class App(ctk.CTk):
 
         self.tabview = ctk.CTkTabview(
             self,
-            corner_radius=14,
-            anchor="w"      # เพิ่ม
+            corner_radius=0,
+            anchor="w",
+            fg_color="#0a0f1e",
+            segmented_button_fg_color="#0a0f1e",
+            segmented_button_selected_color="#1a2744",
+            segmented_button_selected_hover_color="#1e2f55",
+            segmented_button_unselected_color="#0a0f1e",
+            segmented_button_unselected_hover_color="#111827",
         )
-        self.tabview.grid(
-            row=0,
-            column=0,
-            sticky="nsew",
-            padx=14,
-            pady=14
-        )
-        self.tabview.add("Home")
-        self.tabview.add("Setting")
+        self.tabview.grid(row=0, column=0, sticky="nsew", padx=0, pady=0)
+        self.tabview.add("  Home  ")
+        self.tabview.add("  Setting  ")
 
-        self._build_home(self.tabview.tab("Home"))
-        self._build_setting(self.tabview.tab("Setting"))
+        self._build_home(self.tabview.tab("  Home  "))
+        self._build_setting(self.tabview.tab("  Setting  "))
+
+    # ── colour tokens ────────────────────────────────────────────────
+    C = {
+        "bg"       : "#0a0f1e",
+        "surface"  : "#0f1629",
+        "card"     : "#131d35",
+        "border"   : "#1e2d4a",
+        "accent"   : "#3b82f6",
+        "accent2"  : "#06b6d4",
+        "success"  : "#10b981",
+        "danger"   : "#ef4444",
+        "warn"     : "#f59e0b",
+        "text"     : "#e2e8f0",
+        "muted"    : "#64748b",
+        "log_bg"   : "#060c1a",
+    }
+
+    def _card(self, parent, **kw):
+        return ctk.CTkFrame(
+            parent,
+            fg_color=self.C["card"],
+            corner_radius=16,
+            border_width=1,
+            border_color=self.C["border"],
+            **kw
+        )
+
+    def _label(self, parent, text, size=13, weight="normal", color=None, **kw):
+        return ctk.CTkLabel(
+            parent,
+            text=text,
+            font=ctk.CTkFont(family="Segoe UI", size=size, weight=weight),
+            text_color=color or self.C["text"],
+            **kw
+        )
+
+    def _btn(self, parent, text, command, color=None, hover=None, width=120, height=38):
+        c = color or self.C["accent"]
+        h = hover or "#2563eb"
+        return ctk.CTkButton(
+            parent,
+            text=text,
+            command=command,
+            width=width,
+            height=height,
+            fg_color=c,
+            hover_color=h,
+            corner_radius=10,
+            font=ctk.CTkFont(family="Segoe UI", size=13, weight="bold"),
+        )
 
     def _build_home(self, parent):
+        parent.configure(fg_color=self.C["bg"])
         parent.grid_columnconfigure(0, weight=1)
         parent.grid_rowconfigure(3, weight=1)
 
-        title = ctk.CTkLabel(parent, text="JMS Export + Feishu Chat", font=ctk.CTkFont(size=24, weight="bold"))
-        title.grid(row=0, column=0, sticky="w", padx=18, pady=(18, 6))
+        # ── Header bar ─────────────────────────────────────────────
+        header = ctk.CTkFrame(parent, fg_color=self.C["surface"], corner_radius=0, height=64)
+        header.grid(row=0, column=0, sticky="ew")
+        header.grid_propagate(False)
+        header.grid_columnconfigure(1, weight=1)
 
-        control = ctk.CTkFrame(parent, corner_radius=14)
-        control.grid(row=1, column=0, sticky="ew", padx=18, pady=8)
-        for col in range(10):
-            control.grid_columnconfigure(col, weight=0)
-        control.grid_columnconfigure(9, weight=1)
+        dot_frame = ctk.CTkFrame(header, fg_color="transparent")
+        dot_frame.grid(row=0, column=0, padx=20, pady=0, sticky="w")
+        for i, col in enumerate(["#ef4444", "#f59e0b", "#10b981"]):
+            ctk.CTkFrame(dot_frame, width=12, height=12, corner_radius=6, fg_color=col).grid(row=0, column=i, padx=3, pady=26)
 
-        ctk.CTkLabel(
-            control,
-            text="Run Time"
-        ).grid(row=0, column=0, padx=(14, 6), pady=12)
+        self._label(
+            header,
+            "BOT  JMSKKN",
+            size=15, weight="bold",
+            color=self.C["text"],
+        ).grid(row=0, column=1, padx=0, pady=20, sticky="w")
 
+        self.status_badge = ctk.CTkLabel(
+            header,
+            text="● IDLE",
+            font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold"),
+            text_color=self.C["success"],
+            fg_color="#0d2318",
+            corner_radius=20,
+            width=100,
+            height=28,
+        )
+        self.status_badge.grid(row=0, column=2, padx=20, pady=18, sticky="e")
+
+        # ── Control card — single row ──────────────────────────────
+        # Interval | divider | [Export JMS] [Feishu Chat] | spacer | [Start Auto] [Run Now]
+        ctrl = self._card(parent)
+        ctrl.grid(row=1, column=0, sticky="ew", padx=20, pady=(16, 8))
+        ctrl.grid_columnconfigure(8, weight=1)   # spacer pushes buttons to right
+
+        # Interval
+        self._label(ctrl, "Interval", size=12, color=self.C["muted"]).grid(
+            row=0, column=0, padx=(18, 6), pady=16, sticky="w")
         self.run_hour_interval = ctk.CTkComboBox(
-            control,
-            values=RUN_HOURS,
-            width=60,
-            state="readonly"
+            ctrl, values=RUN_HOURS, width=66, state="readonly",
+            fg_color=self.C["surface"], border_color=self.C["border"],
+            button_color=self.C["accent"], dropdown_fg_color=self.C["card"],
+            font=ctk.CTkFont(size=13),
         )
-        self.run_hour_interval.grid(row=0, column=1, padx=(6,2), pady=12)
-
+        self.run_hour_interval.grid(row=0, column=1, padx=3, pady=16)
+        self._label(ctrl, "hr", size=12, color=self.C["muted"]).grid(
+            row=0, column=2, padx=(2, 4), pady=16)
         self.run_minute_interval = ctk.CTkComboBox(
-            control,
-            values=MINUTES,
-            width=60,
-            state="readonly"
+            ctrl, values=MINUTES, width=66, state="readonly",
+            fg_color=self.C["surface"], border_color=self.C["border"],
+            button_color=self.C["accent"], dropdown_fg_color=self.C["card"],
+            font=ctk.CTkFont(size=13),
         )
-        self.run_minute_interval.grid(row=0, column=2, padx=(2,12), pady=12)
+        self.run_minute_interval.grid(row=0, column=3, padx=3, pady=16)
+        self._label(ctrl, "min", size=12, color=self.C["muted"]).grid(
+            row=0, column=4, padx=(2, 16), pady=16)
 
+        # Divider
+        ctk.CTkFrame(ctrl, width=1, height=28, fg_color=self.C["border"]).grid(
+            row=0, column=5, padx=4, pady=16)
+
+        # Checkboxes (ก่อน buttons)
         self.var_export = ctk.BooleanVar(value=True)
         self.var_feishu = ctk.BooleanVar(value=True)
-        ctk.CTkCheckBox(control, text="Export JMS", variable=self.var_export).grid(row=0, column=3, padx=12, pady=12)
-        ctk.CTkCheckBox(control, text="Feishu Chat", variable=self.var_feishu).grid(row=0, column=4, padx=12, pady=12)
+        chk_style = dict(
+            font=ctk.CTkFont(size=13),
+            checkbox_width=18, checkbox_height=18,
+            corner_radius=5,
+            fg_color=self.C["accent"],
+            border_color=self.C["border"],
+            hover_color="#2563eb",
+            text_color=self.C["text"],
+        )
+        ctk.CTkCheckBox(ctrl, text="Export JMS",  variable=self.var_export, **chk_style).grid(
+            row=0, column=6, padx=(16, 10), pady=16)
+        ctk.CTkCheckBox(ctrl, text="Feishu Chat", variable=self.var_feishu, **chk_style).grid(
+            row=0, column=7, padx=(0, 8), pady=16)
 
-        self.btn_start = ctk.CTkButton(control, text="▶ Start Auto", command=self.start_scheduler, width=120)
-        self.btn_start.grid(row=0, column=5, padx=(14, 6), pady=12)
-        self.btn_run = ctk.CTkButton(control, text="⚡ Run Now", command=self.run_now, width=110)
-        self.btn_run.grid(row=0, column=6, padx=6, pady=12)
+        # column=8 = spacer (weight=1)
 
-        date_frame = ctk.CTkFrame(parent, corner_radius=14)
-        date_frame.grid(row=2, column=0, sticky="ew", padx=18, pady=8)
-        for col in range(8):
-            date_frame.grid_columnconfigure(col, weight=0)
-        date_frame.grid_columnconfigure(7, weight=1)
+        # Buttons (ขวาสุด)
+        self.btn_start = self._btn(ctrl, "▶  Start Auto", self.start_scheduler, width=140)
+        self.btn_start.grid(row=0, column=9, padx=(0, 8), pady=16)
+        self.btn_run = self._btn(ctrl, "⚡  Run Now", self.run_now,
+                                 color=self.C["success"], hover="#059669", width=130)
+        self.btn_run.grid(row=0, column=10, padx=(0, 18), pady=16)
 
-        ctk.CTkLabel(date_frame, text="Start Date").grid(row=0, column=0, padx=(14, 6), pady=12)
-        self.start_date = DateEntry(date_frame, width=12, date_pattern="yyyy-mm-dd", state="readonly")
-        self.start_date.grid(row=0, column=1, padx=6, pady=12)
-        self.start_hour = ctk.CTkComboBox(date_frame, values=HOURS, width=92, state="readonly")
-        self.start_hour.grid(row=0, column=2, padx=6, pady=12)
+        # ── Date range card ────────────────────────────────────────
+        date_card = self._card(parent)
+        date_card.grid(row=2, column=0, sticky="ew", padx=20, pady=8)
+        date_card.grid_columnconfigure(7, weight=1)
 
-        ctk.CTkLabel(date_frame, text="→ End Date").grid(row=0, column=3, padx=(18, 6), pady=12)
-        self.end_date = DateEntry(date_frame, width=12, date_pattern="yyyy-mm-dd", state="readonly")
-        self.end_date.grid(row=0, column=4, padx=6, pady=12)
-        self.end_hour = ctk.CTkComboBox(date_frame, values=HOURS, width=92, state="readonly")
-        self.end_hour.grid(row=0, column=5, padx=6, pady=12)
+        self._label(date_card, "DATE RANGE", size=10, weight="bold", color=self.C["muted"]).grid(
+            row=0, column=0, columnspan=8, sticky="w", padx=18, pady=(14, 2))
 
-        self.status = ctk.CTkLabel(date_frame, text="Status: Idle", anchor="w")
-        self.status.grid(row=0, column=6, columnspan=2, sticky="ew", padx=(20, 14), pady=12)
+        # Start
+        self._label(date_card, "Start", size=12, color=self.C["muted"]).grid(row=1, column=0, padx=(18, 6), pady=(4, 14), sticky="w")
+        self.start_date = DateEntry(
+            date_card, width=13, date_pattern="yyyy-mm-dd", state="readonly",
+            background="#1a2744", foreground="#e2e8f0",
+            selectbackground="#3b82f6", selectforeground="#ffffff",
+            font=("Segoe UI", 12),
+        )
+        self.start_date.grid(row=1, column=1, padx=4, pady=(4, 14))
+        self.start_hour = ctk.CTkComboBox(
+            date_card, values=HOURS, width=96, state="readonly",
+            fg_color=self.C["surface"], border_color=self.C["border"],
+            button_color=self.C["accent"], dropdown_fg_color=self.C["card"],
+            font=ctk.CTkFont(size=13),
+        )
+        self.start_hour.grid(row=1, column=2, padx=4, pady=(4, 14))
 
-        log_frame = ctk.CTkFrame(parent, corner_radius=14)
-        log_frame.grid(row=3, column=0, sticky="nsew", padx=18, pady=(8, 18))
-        log_frame.grid_columnconfigure(0, weight=1)
-        log_frame.grid_rowconfigure(1, weight=1)
+        # Arrow
+        self._label(date_card, "→", size=16, color=self.C["accent2"]).grid(row=1, column=3, padx=12, pady=(4, 14))
 
-        ctk.CTkLabel(log_frame, text="Live Log", font=ctk.CTkFont(size=16, weight="bold")).grid(row=0, column=0, sticky="w", padx=14, pady=(12, 4))
-        self.log_box = ctk.CTkTextbox(log_frame, wrap="none")
-        self.log_box.grid(row=1, column=0, sticky="nsew", padx=14, pady=(4, 14))
+        # End
+        self._label(date_card, "End", size=12, color=self.C["muted"]).grid(row=1, column=4, padx=(0, 6), pady=(4, 14), sticky="w")
+        self.end_date = DateEntry(
+            date_card, width=13, date_pattern="yyyy-mm-dd", state="readonly",
+            background="#1a2744", foreground="#e2e8f0",
+            selectbackground="#3b82f6", selectforeground="#ffffff",
+            font=("Segoe UI", 12),
+        )
+        self.end_date.grid(row=1, column=5, padx=4, pady=(4, 14))
+        self.end_hour = ctk.CTkComboBox(
+            date_card, values=HOURS, width=96, state="readonly",
+            fg_color=self.C["surface"], border_color=self.C["border"],
+            button_color=self.C["accent"], dropdown_fg_color=self.C["card"],
+            font=ctk.CTkFont(size=13),
+        )
+        self.end_hour.grid(row=1, column=6, padx=4, pady=(4, 14))
+
+        # Status pill
+        self.status = ctk.CTkLabel(
+            date_card,
+            text="Status: Idle",
+            font=ctk.CTkFont(family="Segoe UI", size=12),
+            text_color=self.C["muted"],
+            anchor="w",
+        )
+        self.status.grid(row=1, column=7, sticky="ew", padx=(16, 18), pady=(4, 14))
+
+        # ── Live Log card ──────────────────────────────────────────
+        log_card = self._card(parent)
+        log_card.grid(row=3, column=0, sticky="nsew", padx=20, pady=(8, 20))
+        log_card.grid_columnconfigure(0, weight=1)
+        log_card.grid_rowconfigure(1, weight=1)
+
+        log_header = ctk.CTkFrame(log_card, fg_color="transparent")
+        log_header.grid(row=0, column=0, sticky="ew", padx=18, pady=(14, 4))
+        log_header.grid_columnconfigure(0, weight=1)
+
+        self._label(log_header, "LIVE LOG", size=10, weight="bold", color=self.C["muted"]).grid(
+            row=0, column=0, sticky="w")
+
+        ctk.CTkButton(
+            log_header,
+            text="Clear",
+            width=60, height=26,
+            fg_color=self.C["surface"],
+            hover_color=self.C["border"],
+            text_color=self.C["muted"],
+            corner_radius=8,
+            font=ctk.CTkFont(size=11),
+            command=lambda: self.log_box.delete("1.0", "end"),
+        ).grid(row=0, column=1, sticky="e")
+
+        self.log_box = ctk.CTkTextbox(
+            log_card,
+            wrap="none",
+            font=("Consolas", 12),
+            fg_color=self.C["log_bg"],
+            text_color="#93c5fd",
+            corner_radius=10,
+            scrollbar_button_color=self.C["border"],
+            scrollbar_button_hover_color=self.C["accent"],
+        )
+        self.log_box.grid(row=1, column=0, sticky="nsew", padx=16, pady=(0, 16))
+
+        # tag colours
+        try:
+            self.log_box.tag_config("INFO",    foreground="#93c5fd")
+            self.log_box.tag_config("SUCCESS", foreground="#86efac")
+            self.log_box.tag_config("WARN",    foreground="#fbbf24")
+            self.log_box.tag_config("ERROR",   foreground="#fca5a5")
+            self.log_box.tag_config("START",   foreground="#67e8f9")
+        except Exception:
+            pass
 
     def _setting_entry(self, parent, row, label, key, browse=None, show=None):
-        ctk.CTkLabel(parent, text=label, width=150, anchor="w").grid(row=row, column=0, padx=(14, 8), pady=7, sticky="w")
-        entry = ctk.CTkEntry(parent, show=show)
+        self._label(parent, label, size=12, color=self.C["muted"], width=160, anchor="w").grid(
+            row=row, column=0, padx=(18, 8), pady=7, sticky="w")
+        entry = ctk.CTkEntry(
+            parent,
+            show=show,
+            fg_color=self.C["surface"],
+            border_color=self.C["border"],
+            text_color=self.C["text"],
+            placeholder_text_color=self.C["muted"],
+            corner_radius=8,
+            height=36,
+            font=ctk.CTkFont(family="Segoe UI", size=13),
+        )
         entry.grid(row=row, column=1, padx=8, pady=7, sticky="ew")
         self.widgets[key] = entry
 
@@ -447,56 +629,68 @@ class App(ctk.CTk):
         entry.bind("<FocusOut>", lambda _e: self.save_from_ui(silent=True))
 
         if browse:
-            ctk.CTkButton(parent, text="Browse", width=90, command=lambda: self._browse_to_entry(key, browse)).grid(row=row, column=2, padx=(8, 14), pady=7)
+            ctk.CTkButton(
+                parent, text="Browse", width=88, height=36,
+                fg_color=self.C["surface"],
+                hover_color=self.C["border"],
+                text_color=self.C["muted"],
+                border_width=1,
+                border_color=self.C["border"],
+                corner_radius=8,
+                font=ctk.CTkFont(size=12),
+                command=lambda: self._browse_to_entry(key, browse),
+            ).grid(row=row, column=2, padx=(8, 18), pady=7)
         return entry
 
+    def _section_title(self, parent, row, icon, title):
+        f = ctk.CTkFrame(parent, fg_color="transparent")
+        f.grid(row=row, column=0, columnspan=3, sticky="ew", padx=14, pady=(18, 4))
+        self._label(f, icon, size=16, color=self.C["accent"]).grid(row=0, column=0, padx=(4, 8))
+        self._label(f, title, size=14, weight="bold", color=self.C["text"]).grid(row=0, column=1, sticky="w")
+        ctk.CTkFrame(f, height=1, fg_color=self.C["border"]).grid(row=1, column=0, columnspan=2, sticky="ew", pady=(4, 0))
+
     def _build_setting(self, parent):
+        parent.configure(fg_color=self.C["bg"])
         parent.grid_columnconfigure(0, weight=1)
         parent.grid_rowconfigure(0, weight=1)
 
-        scroll = ctk.CTkScrollableFrame(parent, corner_radius=14)
-        scroll.grid(row=0, column=0, sticky="nsew", padx=18, pady=18)
+        scroll = ctk.CTkScrollableFrame(
+            parent,
+            corner_radius=0,
+            fg_color=self.C["bg"],
+            scrollbar_button_color=self.C["border"],
+            scrollbar_button_hover_color=self.C["accent"],
+        )
+        scroll.grid(row=0, column=0, sticky="nsew", padx=0, pady=0)
         scroll.grid_columnconfigure(0, weight=1)
 
-        # JMS
-        jms = ctk.CTkFrame(scroll, corner_radius=12)
-        jms.grid(row=0, column=0, sticky="ew", padx=4, pady=8)
+        # ── JMS card ────────────────────────────────────────────────
+        jms = self._card(scroll)
+        jms.grid(row=0, column=0, sticky="ew", padx=20, pady=(20, 8))
         jms.grid_columnconfigure(1, weight=1)
-        ctk.CTkLabel(jms, text="JMS Export Setting", font=ctk.CTkFont(size=18, weight="bold")).grid(row=0, column=0, columnspan=3, sticky="w", padx=14, pady=(14, 8))
+        self._section_title(jms, 0, "⬇", "JMS Export")
         self._setting_entry(jms, 1, "Auth Token", "jms_auth_token", show="*")
         self._setting_entry(jms, 2, "Save Path", "jms_save_path", browse="folder")
         self._setting_entry(jms, 3, "Excel File Name", "jms_filename")
 
-        # Feishu
-        feishu = ctk.CTkFrame(scroll, corner_radius=12)
-        feishu.grid(row=1, column=0, sticky="ew", padx=4, pady=8)
+        # ── Feishu card ─────────────────────────────────────────────
+        feishu = self._card(scroll)
+        feishu.grid(row=1, column=0, sticky="ew", padx=20, pady=8)
         feishu.grid_columnconfigure(1, weight=1)
-        ctk.CTkLabel(feishu, text="Feishu Chat Setting", font=ctk.CTkFont(size=18, weight="bold")).grid(row=0, column=0, columnspan=3, sticky="w", padx=14, pady=(14, 8))
-        self._setting_entry(feishu, 1, "Source Excel", "excel_file", browse="file")
-        self._setting_entry(feishu, 2, "Sheet Index", "excel_sheet_index")
-        self._setting_entry(feishu, 3, "Capture Range", "excel_range")
+        self._section_title(feishu, 0, "🚀", "Feishu Chat")
+        self._setting_entry(feishu, 1, "Source Excel",   "excel_file",         browse="file")
+        self._setting_entry(feishu, 2, "Sheet Index",    "excel_sheet_index")
+        self._setting_entry(feishu, 3, "Capture Range",  "excel_range")
         self._setting_entry(feishu, 4, "PNG Output Folder", "png_output_folder", browse="folder")
-        self._setting_entry(feishu, 5, "PNG File Name", "png_filename")
-        self._setting_entry(feishu, 6, "App ID", "app_id")
-        self._setting_entry(feishu, 7, "App Secret", "app_secret", show="*")
-        self._setting_entry(feishu, 8, "Chat ID", "chat_id")
+        self._setting_entry(feishu, 5, "PNG File Name",  "png_filename")
+        self._setting_entry(feishu, 6, "App ID",         "app_id")
+        self._setting_entry(feishu, 7, "App Secret",     "app_secret",         show="*")
+        self._setting_entry(feishu, 8, "Chat ID",        "chat_id")
 
-        save_frame = ctk.CTkFrame(scroll, fg_color="transparent")
-        save_frame.grid(
-            row=2,
-            column=0,
-            sticky="ew",
-            padx=8,
-            pady=(10, 20)
-        )
-
-        self.btn_save_setting = ctk.CTkButton(
-            save_frame,
-            text="💾 Save",
-            width=140,
-            command=self.save_from_ui
-        )
-        self.btn_save_setting.pack(anchor="center")
+        # ── Save button ─────────────────────────────────────────────
+        btn_row = ctk.CTkFrame(scroll, fg_color="transparent")
+        btn_row.grid(row=2, column=0, sticky="ew", padx=20, pady=(8, 28))
+        self._btn(btn_row, "💾  Save Settings", self.save_from_ui, width=160).pack(side="left", padx=4)
 
     def _browse_to_entry(self, key: str, mode: str):
         if mode == "folder":
@@ -564,17 +758,59 @@ class App(ctk.CTk):
         return start, end
 
     # ---------- Log / State ----------
-    def write_log(self, message: str):
-        text = f"[{datetime.now().strftime('%H:%M:%S')}] {message}"
-        logging.info(text)
-        self.after(0, lambda: self._append_log(text))
+    # ── Log level → tag map ──────────────────────────────────────
+    _LOG_TAGS = {
+        "INFO"    : ("INFO",    "◉"),
+        "OK"      : ("SUCCESS", "✔"),
+        "WARN"    : ("WARN",    "⚠"),
+        "ERROR"   : ("ERROR",   "✖"),
+        "START"   : ("START",   "▶"),
+        "SECTION" : ("INFO",    "─"),
+    }
 
-    def _append_log(self, text: str):
-        self.log_box.insert("end", text + "\n")
+    def write_log(self, message: str, level: str = "INFO"):
+        ts = datetime.now().strftime("%H:%M:%S")
+        tag, icon = self._LOG_TAGS.get(level.upper(), ("INFO", "◉"))
+        text = f"[{ts}]  {icon}  {message}"
+        logging.info(text)
+        self.after(0, lambda t=text, g=tag: self._append_log(t, g))
+
+    def _append_log(self, text: str, tag: str = "INFO"):
+        try:
+            self.log_box.tag_config("INFO",    foreground="#93c5fd")
+            self.log_box.tag_config("SUCCESS", foreground="#86efac")
+            self.log_box.tag_config("WARN",    foreground="#fbbf24")
+            self.log_box.tag_config("ERROR",   foreground="#fca5a5")
+            self.log_box.tag_config("START",   foreground="#67e8f9")
+        except Exception:
+            pass
+        self.log_box.insert("end", text + "\n", tag)
         self.log_box.see("end")
 
+    # badge config map: keyword → (dot_color, bg, text_color, label)
+    _BADGE = {
+        "Running"  : ("#f59e0b", "#2d1f0a", "#fbbf24", "● RUNNING"),
+        "Success"  : ("#10b981", "#0d2318", "#86efac", "● DONE"),
+        "Error"    : ("#ef4444", "#2d0f0f", "#fca5a5", "● ERROR"),
+        "Stopped"  : ("#64748b", "#111827", "#94a3b8", "● STOPPED"),
+        "Next run" : ("#3b82f6", "#0e1f3d", "#93c5fd", "● AUTO"),
+        "Idle"     : ("#10b981", "#0d2318", "#86efac", "● IDLE"),
+    }
+
     def set_status(self, text: str):
-        self.after(0, lambda: self.status.configure(text=text))
+        def _update():
+            self.status.configure(text=text)
+            for kw, (_, bg, fg, badge_text) in self._BADGE.items():
+                if kw.lower() in text.lower():
+                    self.status_badge.configure(
+                        text=badge_text,
+                        text_color=fg,
+                        fg_color=bg,
+                    )
+                    return
+            # default
+            self.status_badge.configure(text="● IDLE", text_color=self.C["success"], fg_color="#0d2318")
+        self.after(0, _update)
 
     def stop_checker(self) -> bool:
         return self.stop_requested
@@ -711,7 +947,7 @@ class App(ctk.CTk):
             except:
                 pass
 
-        self.tabview.set("Home")
+        self.tabview.set("  Home  ")
 
         for entry in self.widgets.values():
             try:
@@ -740,7 +976,7 @@ class App(ctk.CTk):
             except:
                 pass
 
-        self.tabview.set("Home")
+        self.tabview.set("  Home  ")
 
         for entry in self.widgets.values():
             try:
