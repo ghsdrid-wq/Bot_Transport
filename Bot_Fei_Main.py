@@ -1084,7 +1084,7 @@ class App(ctk.CTk):
         while self.scheduler_running:
 
             try:
-                hours = int(self.run_hour_interval.get() or 1)
+                hours = max(int(self.run_hour_interval.get() or 1), 1)
                 minutes = int(self.run_minute_interval.get() or 0)
             except ValueError:
                 hours = 1
